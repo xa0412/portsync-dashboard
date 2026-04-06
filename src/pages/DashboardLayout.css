@@ -1,0 +1,12 @@
+.dashboard-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f1f5f9;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  margin-left: 240px;
+}

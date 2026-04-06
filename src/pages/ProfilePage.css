@@ -1,0 +1,289 @@
+.profile-page {
+  max-width: 640px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 24px;
+}
+
+/* User card */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  flex-wrap: wrap;
+}
+
+.profile-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: #1d4ed8;
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-email {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.profile-role {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 12px;
+}
+
+.profile-role.free {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.profile-role.premium {
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde68a;
+}
+
+/* Days remaining badge */
+.days-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #eff6ff;
+  border: 2px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 10px 18px;
+  min-width: 72px;
+}
+
+.days-badge.expiring {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.days-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1d4ed8;
+  line-height: 1;
+}
+
+.days-badge.expiring .days-number {
+  color: #dc2626;
+}
+
+.days-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.profile-upgrade-btn {
+  padding: 9px 18px;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.profile-upgrade-btn:hover {
+  opacity: 0.9;
+}
+
+/* Account details section */
+.profile-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  margin-bottom: 24px;
+}
+
+.profile-section h3 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 16px;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+}
+
+.profile-row:last-child {
+  border-bottom: none;
+}
+
+.profile-row span:first-child {
+  color: #64748b;
+}
+
+.profile-row span:last-child {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.expiring-text {
+  color: #dc2626 !important;
+  font-weight: 700 !important;
+}
+
+/* Feature comparison table */
+.profile-feature-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.profile-feature-table th {
+  text-align: left;
+  padding: 8px 10px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.profile-feature-table th:not(:first-child) {
+  text-align: center;
+}
+
+.profile-feature-table td {
+  padding: 10px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.profile-feature-table td.center {
+  text-align: center;
+}
+
+.profile-feature-table tr:last-child td {
+  border-bottom: none;
+}
+
+.row-unlocked td:first-child {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.row-locked {
+  opacity: 0.5;
+}
+
+.tick {
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.cross {
+  color: #cbd5e1;
+  font-size: 15px;
+}
+
+/* Upgrade banner */
+.upgrade-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+  color: white;
+  border-radius: 12px;
+  padding: 20px 24px;
+  flex-wrap: wrap;
+}
+
+.upgrade-banner-text strong {
+  font-size: 15px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.upgrade-banner-text p {
+  font-size: 13px;
+  color: #bfdbfe;
+}
+
+.upgrade-btn {
+  padding: 10px 22px;
+  background: white;
+  color: #1d4ed8;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Expiry warning */
+.expiry-warning {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.renew-btn {
+  padding: 8px 18px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.renew-btn:hover {
+  background: #b91c1c;
+}
