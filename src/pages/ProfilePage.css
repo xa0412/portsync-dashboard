@@ -40,10 +40,17 @@
   flex: 1;
 }
 
-.profile-email {
-  font-size: 15px;
-  font-weight: 600;
+.profile-username {
+  font-size: 16px;
+  font-weight: 700;
   color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.profile-email {
+  font-size: 13px;
+  font-weight: 400;
+  color: #64748b;
   margin-bottom: 6px;
 }
 
@@ -155,6 +162,76 @@
 .profile-row span:last-child {
   color: #0f172a;
   font-weight: 500;
+}
+
+/* Username edit */
+.username-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.username-edit-btn {
+  font-size: 12px;
+  color: #1d4ed8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 500;
+}
+
+.username-edit-btn:hover {
+  text-decoration: underline;
+}
+
+.username-edit-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.username-input {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  width: 160px;
+}
+
+.username-input:focus {
+  border-color: #1d4ed8;
+}
+
+.username-save-btn {
+  padding: 4px 12px;
+  background: #1d4ed8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.username-cancel-btn {
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.username-error {
+  color: #dc2626;
+  font-size: 12px;
+  width: 100%;
 }
 
 .expiring-text {

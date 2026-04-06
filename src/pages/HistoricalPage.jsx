@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   LineChart, Line,
   BarChart, Bar,
@@ -15,25 +16,39 @@ function useFetch(url) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setStatus(null);
     fetch(url)
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => {
+        setStatus(res.status);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(setData)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, [url]);
 
-  return { data, loading, error };
+  return { data, loading, error, status };
 }
 
 function LoadingState() {
   return <div className="chart-loading">Loading data…</div>;
 }
 
-function ErrorState({ message }) {
+function ErrorState({ message, status, onUpgrade }) {
+  if (status === 403) {
+    return (
+      <div className="chart-error chart-error-403">
+        🔒 This data requires a Gov / Commercial plan.
+        <button className="strip-upgrade-btn" onClick={onUpgrade}>Upgrade to unlock</button>
+      </div>
+    );
+  }
   return (
     <div className="chart-error">
       ⚠️ Failed to load data: {message}
@@ -88,7 +103,8 @@ function ChartCard({ title, children, isPremium, onExport, onUpgrade }) {
 }
 
 export default function HistoricalPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const isPremium = user?.role === 'Premium';
   const [showModal, setShowModal] = useState(false);
   const [from, setFrom] = useState('');
@@ -105,6 +121,15 @@ export default function HistoricalPage() {
   const cargoBreakdown = useFetch(buildUrl('/api/historical/cargo/breakdown'));
   const container      = useFetch(buildUrl('/api/historical/container'));
   const vesselCalls    = useFetch(buildUrl('/api/historical/vessel-calls'));
+
+  // 401 → session expired, redirect to login
+  useEffect(() => {
+    const statuses = [cargoTotal.status, cargoBreakdown.status, container.status, vesselCalls.status];
+    if (statuses.some(s => s === 401)) {
+      logout();
+      navigate('/login', { state: { message: 'Session expired. Please sign in again.' } });
+    }
+  }, [cargoTotal.status, cargoBreakdown.status, container.status, vesselCalls.status]);
 
   function flattenBreakdown(raw) {
     if (!raw?.data) return [];
@@ -192,7 +217,7 @@ export default function HistoricalPage() {
         onUpgrade={() => setShowModal(true)}
       >
         {cargoTotal.loading && <LoadingState />}
-        {cargoTotal.error && <ErrorState message={cargoTotal.error} />}
+        {cargoTotal.error && <ErrorState message={cargoTotal.error} status={cargoTotal.status} onUpgrade={() => setShowModal(true)} />}
         {!cargoTotal.loading && !cargoTotal.error && (
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={cargoTotalData}>
@@ -215,7 +240,7 @@ export default function HistoricalPage() {
         onUpgrade={() => setShowModal(true)}
       >
         {cargoBreakdown.loading && <LoadingState />}
-        {cargoBreakdown.error && <ErrorState message={cargoBreakdown.error} />}
+        {cargoBreakdown.error && <ErrorState message={cargoBreakdown.error} status={cargoBreakdown.status} onUpgrade={() => setShowModal(true)} />}
         {!cargoBreakdown.loading && !cargoBreakdown.error && (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={breakdownData}>
@@ -240,7 +265,7 @@ export default function HistoricalPage() {
         onUpgrade={() => setShowModal(true)}
       >
         {container.loading && <LoadingState />}
-        {container.error && <ErrorState message={container.error} />}
+        {container.error && <ErrorState message={container.error} status={container.status} onUpgrade={() => setShowModal(true)} />}
         {!container.loading && !container.error && (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={containerData}>
@@ -262,7 +287,7 @@ export default function HistoricalPage() {
         onUpgrade={() => setShowModal(true)}
       >
         {vesselCalls.loading && <LoadingState />}
-        {vesselCalls.error && <ErrorState message={vesselCalls.error} />}
+        {vesselCalls.error && <ErrorState message={vesselCalls.error} status={vesselCalls.status} onUpgrade={() => setShowModal(true)} />}
         {!vesselCalls.loading && !vesselCalls.error && (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={vesselCallsData}>

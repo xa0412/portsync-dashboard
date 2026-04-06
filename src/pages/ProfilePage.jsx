@@ -33,8 +33,23 @@ function expiryDate(upgradeDate) {
 }
 
 export default function ProfilePage() {
-  const { user, renew } = useAuth();
+  const { user, renew, updateUsername } = useAuth();
   const [showModal, setShowModal] = useState(false);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+
+  function handleEditUsername() {
+    setUsernameInput(user?.username || user?.email?.split('@')[0] || '');
+    setUsernameError('');
+    setEditingUsername(true);
+  }
+
+  function handleSaveUsername() {
+    const err = updateUsername(usernameInput);
+    if (err) { setUsernameError(err); return; }
+    setEditingUsername(false);
+  }
   const isPremium = user?.role === 'Premium';
   const daysLeft = daysRemaining(user?.upgradeDate);
   const expiry = expiryDate(user?.upgradeDate);
@@ -48,9 +63,10 @@ export default function ProfilePage() {
       {/* User card */}
       <div className="profile-card">
         <div className="profile-avatar">
-          {user?.email?.[0]?.toUpperCase() ?? '?'}
+          {(user?.username || user?.email)?.[0]?.toUpperCase() ?? '?'}
         </div>
         <div className="profile-info">
+          <div className="profile-username">{user?.username || user?.email?.split('@')[0]}</div>
           <div className="profile-email">{user?.email}</div>
           <div className={`profile-role ${isPremium ? 'premium' : 'free'}`}>
             {isPremium ? 'Gov / Commercial' : 'Free / Public'}
@@ -76,6 +92,29 @@ export default function ProfilePage() {
       {/* Account details */}
       <div className="profile-section">
         <h3>Account Details</h3>
+        <div className="profile-row">
+          <span>Username</span>
+          {editingUsername ? (
+            <span className="username-edit-group">
+              <input
+                className="username-input"
+                value={usernameInput}
+                onChange={e => setUsernameInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveUsername(); if (e.key === 'Escape') setEditingUsername(false); }}
+                maxLength={30}
+                autoFocus
+              />
+              <button className="username-save-btn" onClick={handleSaveUsername}>Save</button>
+              <button className="username-cancel-btn" onClick={() => setEditingUsername(false)}>Cancel</button>
+              {usernameError && <span className="username-error">{usernameError}</span>}
+            </span>
+          ) : (
+            <span className="username-display">
+              {user?.username || user?.email?.split('@')[0]}
+              <button className="username-edit-btn" onClick={handleEditUsername}>Edit</button>
+            </span>
+          )}
+        </div>
         <div className="profile-row">
           <span>Email</span>
           <span>{user?.email}</span>

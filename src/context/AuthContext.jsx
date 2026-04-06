@@ -12,11 +12,13 @@ function saveAccounts(accounts) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Load logged-in user from localStorage on app start
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored) setUser(JSON.parse(stored));
+    setLoading(false);
   }, []);
 
   // Register: stores account in localStorage
@@ -41,9 +43,29 @@ export function AuthProvider({ children }) {
     const account = accounts[email];
     if (!account) return 'No account found with this email.';
     if (account.password !== password) return 'Incorrect password.';
-    const userData = { email, role: account.role, upgradeDate: account.upgradeDate || null };
+    const userData = {
+      email,
+      role: account.role,
+      upgradeDate: account.upgradeDate || null,
+      username: account.username || email.split('@')[0],
+    };
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
+    return null;
+  }
+
+  // Update username: stores new username in accounts store and current session
+  // Returns null on success, or an error string
+  function updateUsername(newUsername) {
+    const trimmed = newUsername.trim();
+    if (!trimmed) return 'Username cannot be empty.';
+    if (trimmed.length > 30) return 'Username must be 30 characters or fewer.';
+    const accounts = getAccounts();
+    if (accounts[user.email]) accounts[user.email].username = trimmed;
+    saveAccounts(accounts);
+    const updated = { ...user, username: trimmed };
+    localStorage.setItem('user', JSON.stringify(updated));
+    setUser(updated);
     return null;
   }
 
@@ -80,7 +102,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, upgrade, renew }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, upgrade, renew, updateUsername }}>
       {children}
     </AuthContext.Provider>
   );

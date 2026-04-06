@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './AuthPage.css';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const sessionMessage = location.state?.message || null;
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -29,6 +31,7 @@ export default function LoginPage() {
         <div className="auth-logo">⚓ PortSync</div>
         <h2 className="auth-title">Sign In</h2>
         <p className="auth-subtitle">Smart Ocean Shipping Tracker</p>
+        {sessionMessage && <div className="auth-error">{sessionMessage}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
