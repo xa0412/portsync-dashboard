@@ -10,18 +10,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const sessionMessage = location.state?.message || null;
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     if (!email || !password) {
       setError('Please enter email and password.');
       return;
     }
-    // Mock login — swap with Cognito Auth.signIn() once Member 2 provides IDs
-    const err = login(email, password);
-    if (err) { setError(err); return; }
+    setSubmitting(true);
+    const result = await login(email, password);
+    setSubmitting(false);
+    if (result.error) { setError(result.error); return; }
     navigate('/dashboard/historical');
   }
 
@@ -41,6 +43,7 @@ export default function LoginPage() {
               placeholder="you@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
+              disabled={submitting}
             />
           </div>
           <div className="form-group">
@@ -50,22 +53,20 @@ export default function LoginPage() {
               placeholder="••••••••"
               value={password}
               onChange={e => setPassword(e.target.value)}
+              disabled={submitting}
             />
           </div>
 
           {error && <div className="auth-error">{error}</div>}
 
-          <button type="submit" className="auth-btn">Sign In</button>
+          <button type="submit" className="auth-btn" disabled={submitting}>
+            {submitting ? 'Signing in…' : 'Sign In'}
+          </button>
         </form>
 
         <p className="auth-switch">
           Don't have an account? <Link to="/register">Register</Link>
         </p>
-
-        <div className="auth-hint">
-          <strong>Dev tip:</strong> Use any email/password to log in.<br />
-          Include "premium" in email for Gov / Commercial plan. Else defaults to Free / Public. (Mock auth — Cognito coming soon)
-        </div>
       </div>
     </div>
   );

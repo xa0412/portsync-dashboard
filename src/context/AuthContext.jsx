@@ -1,108 +1,129 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import {
+  signUp,
+  confirmSignUp,
+  signIn,
+  signOut,
+  fetchAuthSession,
+  getCurrentUser,
+} from 'aws-amplify/auth';
 
 const AuthContext = createContext(null);
 
-// Helpers for the local accounts store
-function getAccounts() {
-  return JSON.parse(localStorage.getItem('accounts') || '{}');
-}
-function saveAccounts(accounts) {
-  localStorage.setItem('accounts', JSON.stringify(accounts));
+// Decode groups and build user object from Amplify session
+async function buildUserFromSession() {
+  try {
+    const [sessionResult, currentUser] = await Promise.all([
+      fetchAuthSession(),
+      getCurrentUser(),
+    ]);
+    const payload = sessionResult.tokens?.idToken?.payload;
+    if (!payload) return null;
+    const groups = payload['cognito:groups'] || [];
+    const role = groups.includes('Premium') ? 'Premium' : 'Free';
+    const idToken = sessionResult.tokens.idToken.toString();
+    return {
+      email: payload.email || currentUser.username,
+      username: payload['cognito:username'] || currentUser.username,
+      role,
+      idToken,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load logged-in user from localStorage on app start
+  // Restore session on app start
   useEffect(() => {
-    const stored = localStorage.getItem('user');
-    if (stored) setUser(JSON.parse(stored));
-    setLoading(false);
+    buildUserFromSession().then(u => {
+      setUser(u);
+      setLoading(false);
+    });
   }, []);
 
-  // Register: stores account in localStorage
-  // Returns null on success, or an error string
-  // TODO: replace with Cognito Auth.signUp() once Member 2 provides IDs
-  function register(email, password) {
-    const accounts = getAccounts();
-    if (accounts[email]) return 'An account with this email already exists.';
-    const role = email.includes('premium') ? 'Premium' : 'Free';
-    // Set upgradeDate now for accounts that start as Premium via email
-    const upgradeDate = role === 'Premium' ? new Date().toISOString() : null;
-    accounts[email] = { password, role, upgradeDate };
-    saveAccounts(accounts);
-    return null;
-  }
-
-  // Login: checks against localStorage accounts
-  // Returns null on success, or an error string
-  // TODO: replace with Cognito Auth.signIn() once Member 2 provides IDs
-  function login(email, password) {
-    const accounts = getAccounts();
-    const account = accounts[email];
-    if (!account) return 'No account found with this email.';
-    if (account.password !== password) return 'Incorrect password.';
-    const userData = {
-      email,
-      role: account.role,
-      upgradeDate: account.upgradeDate || null,
-      username: account.username || email.split('@')[0],
-    };
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    return null;
-  }
-
-  // Update username: stores new username in accounts store and current session
-  // Returns null on success, or an error string
-  function updateUsername(newUsername) {
-    const trimmed = newUsername.trim();
-    if (!trimmed) return 'Username cannot be empty.';
-    if (trimmed.length > 30) return 'Username must be 30 characters or fewer.';
-    const accounts = getAccounts();
-    if (accounts[user.email]) accounts[user.email].username = trimmed;
-    saveAccounts(accounts);
-    const updated = { ...user, username: trimmed };
-    localStorage.setItem('user', JSON.stringify(updated));
-    setUser(updated);
-    return null;
-  }
-
-  // Upgrade: bumps the current user's role to Premium, stores upgrade date for 30-day countdown
-  function upgrade() {
-    const accounts = getAccounts();
-    if (!user) return;
-    const upgradeDate = new Date().toISOString();
-    if (accounts[user.email]) {
-      accounts[user.email].role = 'Premium';
-      accounts[user.email].upgradeDate = upgradeDate;
+  // Register: creates Cognito user, sends verification email
+  // Returns { error } on failure, { needsConfirm: true } if verification needed
+  async function register(email, password) {
+    try {
+      const result = await signUp({
+        username: email,
+        password,
+        options: { userAttributes: { email } },
+      });
+      if (result.nextStep?.signUpStep === 'CONFIRM_SIGN_UP') {
+        return { needsConfirm: true };
+      }
+      return {};
+    } catch (err) {
+      return { error: err.message || 'Registration failed.' };
     }
-    saveAccounts(accounts);
-    const upgraded = { ...user, role: 'Premium', upgradeDate };
-    localStorage.setItem('user', JSON.stringify(upgraded));
-    setUser(upgraded);
   }
 
-  // Renew: resets upgradeDate to now, giving another 30 days
-  function renew() {
-    const accounts = getAccounts();
-    if (!user) return;
-    const upgradeDate = new Date().toISOString();
-    if (accounts[user.email]) accounts[user.email].upgradeDate = upgradeDate;
-    saveAccounts(accounts);
-    const renewed = { ...user, upgradeDate };
-    localStorage.setItem('user', JSON.stringify(renewed));
-    setUser(renewed);
+  // Confirm registration with the code sent to email
+  async function confirmRegistration(email, code) {
+    try {
+      await confirmSignUp({ username: email, confirmationCode: code });
+      return {};
+    } catch (err) {
+      return { error: err.message || 'Confirmation failed.' };
+    }
   }
 
-  function logout() {
-    localStorage.removeItem('user');
+  // Login: authenticates with Cognito and loads user session
+  // Returns { error } on failure
+  async function login(email, password) {
+    try {
+      const result = await signIn({ username: email, password });
+      if (result.nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
+        return { error: 'Please verify your email before signing in.' };
+      }
+      const u = await buildUserFromSession();
+      setUser(u);
+      return {};
+    } catch (err) {
+      if (err.name === 'UserNotConfirmedException') {
+        return { error: 'Please verify your email before signing in.' };
+      }
+      return { error: err.message || 'Login failed.' };
+    }
+  }
+
+  async function logout() {
+    await signOut();
     setUser(null);
   }
 
+  // Refresh idToken (call before API requests if needed)
+  async function refreshSession() {
+    const u = await buildUserFromSession();
+    if (u) setUser(u);
+    return u;
+  }
+
+  // Upgrade / renew: local session override for demo purposes only.
+  // Real role comes from Cognito groups (assigned by admin).
+  function upgrade() {
+    if (!user) return;
+    setUser({ ...user, role: 'Premium', upgradeDate: new Date().toISOString() });
+  }
+
+  function renew() {
+    if (!user) return;
+    setUser({ ...user, upgradeDate: new Date().toISOString() });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, upgrade, renew, updateUsername }}>
+    <AuthContext.Provider value={{
+      user, loading,
+      login, logout,
+      register, confirmRegistration,
+      upgrade, renew,
+      refreshSession,
+    }}>
       {children}
     </AuthContext.Provider>
   );

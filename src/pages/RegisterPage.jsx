@@ -4,15 +4,16 @@ import { useAuth } from '../context/AuthContext';
 import './AuthPage.css';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, confirmRegistration } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [code, setCode] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState('form'); // 'form' | 'confirm' | 'done'
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     if (!email || !password || !confirm) {
@@ -23,31 +24,41 @@ export default function RegisterPage() {
       setError('Passwords do not match.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
-    const err = register(email, password);
-    if (err) {
-      setError(err);
-      return;
-    }
-    setSuccess(true);
+    const result = await register(email, password);
+    if (result.error) { setError(result.error); return; }
+    if (result.needsConfirm) { setStep('confirm'); return; }
+    setStep('done');
     setTimeout(() => navigate('/login'), 1500);
+  }
+
+  async function handleConfirm(e) {
+    e.preventDefault();
+    setError('');
+    if (!code) { setError('Please enter the verification code.'); return; }
+    const result = await confirmRegistration(email, code.trim());
+    if (result.error) { setError(result.error); return; }
+    setStep('done');
+    setTimeout(() => navigate('/login', { state: { message: 'Account verified! Please sign in.' } }), 1500);
   }
 
   return (
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">⚓ PortSync</div>
-        <h2 className="auth-title">Create Account</h2>
+        <h2 className="auth-title">
+          {step === 'confirm' ? 'Verify Email' : 'Create Account'}
+        </h2>
         <p className="auth-subtitle">Smart Ocean Shipping Tracker</p>
 
-        {success ? (
-          <div className="auth-success">
-            Account created! Redirecting to login…
-          </div>
-        ) : (
+        {step === 'done' && (
+          <div className="auth-success">Account verified! Redirecting to sign in…</div>
+        )}
+
+        {step === 'form' && (
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
               <label>Email</label>
@@ -62,7 +73,7 @@ export default function RegisterPage() {
               <label>Password</label>
               <input
                 type="password"
-                placeholder="Min. 6 characters"
+                placeholder="Min. 8 characters"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
               />
@@ -76,21 +87,44 @@ export default function RegisterPage() {
                 onChange={e => setConfirm(e.target.value)}
               />
             </div>
-
             {error && <div className="auth-error">{error}</div>}
-
             <button type="submit" className="auth-btn">Create Account</button>
           </form>
         )}
 
-        <p className="auth-switch">
-          Already have an account? <Link to="/login">Sign In</Link>
-        </p>
+        {step === 'confirm' && (
+          <form onSubmit={handleConfirm} className="auth-form">
+            <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>
+              A verification code was sent to <strong>{email}</strong>. Check your inbox.
+            </p>
+            <div className="form-group">
+              <label>Verification Code</label>
+              <input
+                type="text"
+                placeholder="Enter 6-digit code"
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                autoFocus
+              />
+            </div>
+            {error && <div className="auth-error">{error}</div>}
+            <button type="submit" className="auth-btn">Verify Email</button>
+            <button
+              type="button"
+              className="auth-btn"
+              style={{ background: 'none', color: '#64748b', boxShadow: 'none', marginTop: '0.5rem' }}
+              onClick={() => { setStep('form'); setError(''); }}
+            >
+              ← Back
+            </button>
+          </form>
+        )}
 
-        <div className="auth-hint">
-          <strong>Dev tip:</strong> Include "premium" in email for Gov / Commercial tier.<br />
-          Accounts stored locally until Cognito is connected.
-        </div>
+        {step === 'form' && (
+          <p className="auth-switch">
+            Already have an account? <Link to="/login">Sign In</Link>
+          </p>
+        )}
       </div>
     </div>
   );

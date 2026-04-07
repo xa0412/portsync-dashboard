@@ -12,7 +12,7 @@ import './HistoricalPage.css';
 
 const API_BASE = 'https://wa8v5iats6.execute-api.ap-southeast-1.amazonaws.com/prod';
 
-function useFetch(url) {
+function useFetch(url, idToken) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,7 +22,8 @@ function useFetch(url) {
     setLoading(true);
     setError(null);
     setStatus(null);
-    fetch(url)
+    const headers = idToken ? { Authorization: `Bearer ${idToken}` } : {};
+    fetch(url, { headers })
       .then(res => {
         setStatus(res.status);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -31,7 +32,7 @@ function useFetch(url) {
       .then(setData)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [url]);
+  }, [url, idToken]);
 
   return { data, loading, error, status };
 }
@@ -117,10 +118,11 @@ export default function HistoricalPage() {
     return url.toString();
   }
 
-  const cargoTotal     = useFetch(buildUrl('/api/historical/cargo/total'));
-  const cargoBreakdown = useFetch(buildUrl('/api/historical/cargo/breakdown'));
-  const container      = useFetch(buildUrl('/api/historical/container'));
-  const vesselCalls    = useFetch(buildUrl('/api/historical/vessel-calls'));
+  const idToken = user?.idToken;
+  const cargoTotal     = useFetch(buildUrl('/api/historical/cargo/total'), idToken);
+  const cargoBreakdown = useFetch(buildUrl('/api/historical/cargo/breakdown'), idToken);
+  const container      = useFetch(buildUrl('/api/historical/container'), idToken);
+  const vesselCalls    = useFetch(buildUrl('/api/historical/vessel-calls'), idToken);
 
   // 401 → session expired, redirect to login
   useEffect(() => {
