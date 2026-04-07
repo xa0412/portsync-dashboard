@@ -75,6 +75,8 @@ export function AuthProvider({ children }) {
   // Returns { error } on failure
   async function login(email, password) {
     try {
+      // Clear any stale Amplify session before signing in
+      await signOut().catch(() => {});
       const result = await signIn({ username: email, password });
       if (result.nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
         return { error: 'Please verify your email before signing in.' };
