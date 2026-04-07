@@ -131,7 +131,7 @@ export default function ProfilePage() {
         )}
         <div className="profile-row">
           <span>Auth Provider</span>
-          <span>AWS Cognito (mock during development)</span>
+          <span>AWS Cognito</span>
         </div>
       </div>
 

@@ -22,12 +22,10 @@ async function buildUserFromSession() {
     const groups = payload['cognito:groups'] || [];
     const role = groups.includes('Premium') ? 'Premium' : 'Free';
     const idToken = sessionResult.tokens.idToken.toString();
-    return {
-      email: payload.email || currentUser.username,
-      username: payload['cognito:username'] || currentUser.username,
-      role,
-      idToken,
-    };
+    const email = payload.email || currentUser.username;
+    // Display name stored locally (Cognito identity is the source of truth for auth)
+    const displayName = localStorage.getItem(`displayName:${email}`) || email.split('@')[0];
+    return { email, username: displayName, role, idToken };
   } catch {
     return null;
   }
@@ -104,6 +102,17 @@ export function AuthProvider({ children }) {
     return u;
   }
 
+  // Update display name: stored in localStorage, keyed by email
+  // Returns an error string on failure, null on success
+  function updateUsername(newUsername) {
+    const trimmed = newUsername.trim();
+    if (!trimmed) return 'Username cannot be empty.';
+    if (trimmed.length > 30) return 'Username must be 30 characters or fewer.';
+    localStorage.setItem(`displayName:${user.email}`, trimmed);
+    setUser({ ...user, username: trimmed });
+    return null;
+  }
+
   // Upgrade / renew: local session override for demo purposes only.
   // Real role comes from Cognito groups (assigned by admin).
   function upgrade() {
@@ -122,6 +131,7 @@ export function AuthProvider({ children }) {
       login, logout,
       register, confirmRegistration,
       upgrade, renew,
+      updateUsername,
       refreshSession,
     }}>
       {children}
