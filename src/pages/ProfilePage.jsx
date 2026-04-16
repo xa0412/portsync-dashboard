@@ -13,8 +13,6 @@ const FEATURES = [
   { label: 'Date range filter on all charts',            free: false, premium: true  },
   { label: 'CSV export for operational reporting',       free: false, premium: true  },
   { label: 'Vessel calls breakdown analytics',           free: false, premium: true  },
-  { label: 'REST API access (metered, for integration)', free: false, premium: true  },
-  { label: 'Priority support',                           free: false, premium: true  },
 ];
 
 function daysRemaining(upgradeDate) {
